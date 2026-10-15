@@ -14,20 +14,34 @@ import fallbackDb from '../../data/kindergarten_db.json';
 
 export const apiClient = {
   async getInitialData() {
+    let data: any = fallbackDb;
     try {
       const res = await fetch('/api/initial-data');
       if (res.ok) {
         const json = await res.json();
         if (json.success && json.data) {
-          return json;
+          data = json.data;
         }
       }
     } catch (err) {
       console.warn('[apiClient] Không thể kết nối tới /api/initial-data, dùng dữ liệu khởi tạo dự phòng');
     }
+
+    try {
+      const savedAtt = localStorage.getItem('local_attendance');
+      if (savedAtt) {
+        const parsed = JSON.parse(savedAtt);
+        const map = new Map((data.attendance || []).map((a: any) => [`${a.date}_${a.studentId}`, a]));
+        for (const item of parsed) {
+          map.set(`${item.date}_${item.studentId}`, item);
+        }
+        data = { ...data, attendance: Array.from(map.values()) };
+      }
+    } catch (e) {}
+
     return {
       success: true,
-      data: fallbackDb
+      data
     };
   },
 
@@ -150,6 +164,16 @@ export const apiClient = {
   },
 
   async batchSaveAttendance(records: AttendanceRecord[]) {
+    try {
+      const savedAtt = localStorage.getItem('local_attendance');
+      const existing = savedAtt ? JSON.parse(savedAtt) : [];
+      const map = new Map(existing.map((a: any) => [`${a.date}_${a.studentId}`, a]));
+      for (const r of records) {
+        map.set(`${r.date}_${r.studentId}`, r);
+      }
+      localStorage.setItem('local_attendance', JSON.stringify(Array.from(map.values())));
+    } catch (e) {}
+
     try {
       const res = await fetch('/api/attendance/batch', {
         method: 'POST',

@@ -66,6 +66,29 @@ export const AttendanceView: React.FC<Props> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
 
+  // Sync localRecords whenever attendance or selectedDate changes
+  React.useEffect(() => {
+    const map: { [studentId: string]: Partial<AttendanceRecord> } = {};
+    for (const student of classStudents) {
+      const existing = attendance.find(a => a.studentId === student.id && a.date === selectedDate);
+      if (existing) {
+        map[student.id] = { ...existing };
+      } else {
+        map[student.id] = {
+          date: selectedDate,
+          studentId: student.id,
+          studentName: student.fullName,
+          classId: currentClass.id,
+          status: 'present',
+          arrivalTime: '07:35',
+          temperature: 36.5,
+          pickupNote: ''
+        };
+      }
+    }
+    setLocalRecords(map);
+  }, [selectedDate, attendance, currentClass.id]);
+
   // Update a single student field in local records
   const updateStudentField = (studentId: string, field: keyof AttendanceRecord, value: any) => {
     setLocalRecords(prev => ({
@@ -136,8 +159,9 @@ export const AttendanceView: React.FC<Props> = ({
   };
 
   // Calculate live counts
+  const excusedStudents = classStudents.filter(s => localRecords[s.id]?.status === 'excused');
   const presentCount = classStudents.filter(s => localRecords[s.id]?.status === 'present').length;
-  const excusedCount = classStudents.filter(s => localRecords[s.id]?.status === 'excused').length;
+  const excusedCount = excusedStudents.length;
   const unexcusedCount = classStudents.filter(s => localRecords[s.id]?.status === 'unexcused').length;
   const lateCount = classStudents.filter(s => localRecords[s.id]?.status === 'late').length;
 
@@ -188,6 +212,46 @@ export const AttendanceView: React.FC<Props> = ({
           </button>
         </div>
       </div>
+
+      {/* Realtime Leave Notification from Parents */}
+      {excusedStudents.length > 0 && (
+        <div className="rounded-3xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 p-4 sm:p-5 shadow-xs flex flex-col gap-3">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-xs">
+              <AlertCircle className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-sm font-black text-amber-950">
+                  Hôm nay có {excusedStudents.length} bé xin nghỉ học (nghỉ có phép)
+                </h3>
+                <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900 border border-amber-300">
+                  Phụ huynh đã báo qua App
+                </span>
+              </div>
+              <p className="text-xs text-amber-800 mt-0.5">
+                Danh sách các bé nghỉ phép hôm nay đã được hệ thống ghi nhận sẵn vào sổ điểm danh:
+              </p>
+              <div className="flex flex-wrap gap-2 mt-2.5">
+                {excusedStudents.map(s => (
+                  <span
+                    key={s.id}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-amber-300 text-xs font-bold text-slate-800 shadow-2xs"
+                  >
+                    <span className="h-2.5 w-2.5 rounded-full bg-amber-500"></span>
+                    <span>{s.fullName}</span>
+                    {localRecords[s.id]?.pickupNote && (
+                      <span className="text-[11px] font-normal text-slate-500">
+                        ({localRecords[s.id]?.pickupNote})
+                      </span>
+                    )}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats Summary Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -284,8 +348,13 @@ export const AttendanceView: React.FC<Props> = ({
                               </span>
                             )}
                           </div>
-                          <div className="text-[11px] font-mono text-slate-400">
-                            {student.studentCode}
+                          <div className="text-[11px] font-mono text-slate-400 flex items-center gap-1.5 flex-wrap">
+                            <span>{student.studentCode}</span>
+                            {status === 'excused' && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.2 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
+                                🟡 Xin nghỉ phép
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>

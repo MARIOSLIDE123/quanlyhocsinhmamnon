@@ -45,6 +45,7 @@ interface Props {
   currentUser: UserAccount;
   selectedDate: string;
   onSendMessage: (msg: Partial<ParentCommunication>) => Promise<void>;
+  onToggleLeave?: (studentId: string, date: string, isLeave: boolean, reason?: string) => Promise<void>;
 }
 
 export const ParentPortalView: React.FC<Props> = ({
@@ -59,16 +60,21 @@ export const ParentPortalView: React.FC<Props> = ({
   mediaFiles,
   currentUser,
   selectedDate,
-  onSendMessage
+  onSendMessage,
+  onToggleLeave
 }) => {
   const [activeTab, setActiveTab] = useState<'today' | 'profile' | 'attendance' | 'meals' | 'health' | 'photos' | 'messages'>('today');
   const [newMsgContent, setNewMsgContent] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [isSubmittingLeave, setIsSubmittingLeave] = useState(false);
+  const [leaveReason, setLeaveReason] = useState('');
+  const [showReasonInput, setShowReasonInput] = useState(false);
 
   // Today's attendance for child
   const todayAttendance = attendance.find(
-    a => a.studentId === student.id && (a.date === selectedDate || true)
+    a => a.studentId === student.id && a.date === selectedDate
   );
+  const isTodayExcused = todayAttendance?.status === 'excused';
 
   // Child's attendance history
   const childAttendanceList = attendance.filter(a => a.studentId === student.id);
@@ -154,19 +160,144 @@ export const ParentPortalView: React.FC<Props> = ({
           {/* Today Quick Status Pill */}
           <div className="rounded-2xl bg-white/15 backdrop-blur-md p-4 border border-white/20 text-xs space-y-1 self-start md:self-auto">
             <span className="text-[11px] uppercase tracking-wider text-rose-100 font-bold block">
-              Trạng thái hôm nay
+              Trạng thái hôm nay ({selectedDate})
             </span>
             <div className="flex items-center gap-2">
-              <span className={`inline-block h-3 w-3 rounded-full ${todayAttendance?.status === 'present' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-300'}`}></span>
+              <span className={`inline-block h-3 w-3 rounded-full ${
+                isTodayExcused
+                  ? 'bg-amber-300 animate-pulse'
+                  : todayAttendance?.status === 'present'
+                  ? 'bg-emerald-400'
+                  : 'bg-white/50'
+              }`}></span>
               <span className="font-extrabold text-sm">
-                {todayAttendance?.status === 'present'
+                {isTodayExcused
+                  ? 'Nghỉ có phép (Đã báo qua App)'
+                  : todayAttendance?.status === 'present'
                   ? `Đang ở lớp (${todayAttendance.arrivalTime || '07:30'})`
                   : 'Chờ điểm danh sáng'}
               </span>
             </div>
-            {todayAttendance?.temperature && (
+            {todayAttendance?.temperature && !isTodayExcused && (
               <div className="text-[11px] text-rose-100">
                 Thân nhiệt sáng: <strong>{todayAttendance.temperature}°C</strong> (Bình thường)
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* PARENT QUICK LEAVE REQUEST CARD (TÍCH PHÉP) */}
+      <div className={`rounded-3xl p-5 md:p-6 transition border-2 shadow-xs ${
+        isTodayExcused
+          ? 'bg-gradient-to-r from-amber-500/10 via-amber-50 to-orange-50 border-amber-300'
+          : 'bg-white border-rose-100 hover:border-rose-200'
+      }`}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 shadow-xs ${
+              isTodayExcused ? 'bg-amber-500 text-white' : 'bg-rose-100 text-rose-600'
+            }`}>
+              <Calendar className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-sm md:text-base font-black text-slate-900">
+                  {isTodayExcused
+                    ? 'Bé đã được xin phép nghỉ học hôm nay'
+                    : 'Xin phép cho con nghỉ học hôm nay'}
+                </h3>
+                {isTodayExcused ? (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+                    <CheckCircle className="w-3.5 h-3.5 text-amber-600" />
+                    Đã tích "Phép"
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                    Ngày {selectedDate}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                {isTodayExcused
+                  ? 'Cô Hồ Thị Hạnh đã nhận được thông báo nghỉ của bé trên sổ điểm danh lớp 2 Tuổi I.'
+                  : 'Bố mẹ chỉ cần bấm nút "Tích phép" bên cạnh để báo cô giáo cho con nghỉ học hôm nay một cách nhanh chóng.'}
+              </p>
+              {isTodayExcused && todayAttendance?.pickupNote && (
+                <div className="text-[11px] text-amber-900 font-medium bg-amber-100/80 px-2.5 py-1 rounded-xl mt-1.5 inline-block border border-amber-200">
+                  Ghi chú: {todayAttendance.pickupNote}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            {isTodayExcused ? (
+              <button
+                type="button"
+                onClick={() => onToggleLeave && onToggleLeave(student.id, selectedDate, false)}
+                disabled={isSubmittingLeave}
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl border border-slate-300 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer shadow-xs"
+              >
+                <span>Hủy xin nghỉ (Bé đi học lại)</span>
+              </button>
+            ) : showReasonInput ? (
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Lý do nghỉ (ốm, việc nhà...)..."
+                  value={leaveReason}
+                  onChange={(e) => setLeaveReason(e.target.value)}
+                  className="rounded-2xl border border-amber-300 px-3.5 py-2 text-xs text-slate-800 bg-amber-50/50 focus:outline-none focus:border-amber-500"
+                />
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (onToggleLeave) {
+                      setIsSubmittingLeave(true);
+                      await onToggleLeave(student.id, selectedDate, true, leaveReason || 'Phụ huynh xin nghỉ phép qua App');
+                      setIsSubmittingLeave(false);
+                      setShowReasonInput(false);
+                      setLeaveReason('');
+                    }
+                  }}
+                  disabled={isSubmittingLeave}
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-2xl bg-amber-500 hover:bg-amber-600 text-xs font-black text-white shadow-xs transition cursor-pointer"
+                >
+                  <span>Xác nhận gửi</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowReasonInput(false)}
+                  className="text-xs text-slate-400 hover:text-slate-600 px-2 py-1"
+                >
+                  Đóng
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (onToggleLeave) {
+                      setIsSubmittingLeave(true);
+                      await onToggleLeave(student.id, selectedDate, true, 'Phụ huynh xin nghỉ phép hôm nay qua App');
+                      setIsSubmittingLeave(false);
+                    }
+                  }}
+                  disabled={isSubmittingLeave}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-xs font-black text-white hover:from-amber-600 hover:to-orange-600 transition cursor-pointer shadow-md shadow-amber-200"
+                >
+                  <span>Tích "Phép" Cho Bé Nghỉ Hôm Nay</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowReasonInput(true)}
+                  className="text-xs text-slate-500 hover:text-slate-700 underline px-1 py-1"
+                  title="Nhập thêm lý do chi tiết nếu muốn"
+                >
+                  + Lý do
+                </button>
               </div>
             )}
           </div>

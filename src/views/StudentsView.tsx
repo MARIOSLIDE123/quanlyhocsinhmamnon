@@ -189,10 +189,10 @@ export const StudentsView: React.FC<Props> = ({
         <div>
           <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
             <Users className="w-6 h-6 text-rose-500" />
-            Hồ Sơ Học Sinh Mầm Non
+            Hồ Sơ Học Sinh Lớp 2 Tuổi I
           </h2>
           <p className="text-xs text-slate-500">
-            Quản lý danh sách trẻ, người giám hộ, quyền đưa đón và lưu ý sức khỏe
+            Danh sách 21 bé Lớp 2 Tuổi I – Trường MN Quỳnh Sơn 1 • Giáo viên: Cô Hồ Thị Hạnh
           </p>
         </div>
 

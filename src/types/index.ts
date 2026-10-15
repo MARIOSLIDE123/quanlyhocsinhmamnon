@@ -1,6 +1,4 @@
-// Core Type Definitions for CÔ HẠNH - MẦM NON System
-
-export type UserRole = 'admin' | 'teacher' | 'parent';
+export type UserRole = 'teacher' | 'parent';
 
 export interface UserAccount {
   id: string;

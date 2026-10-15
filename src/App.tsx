@@ -232,6 +232,27 @@ export function App() {
     }
   };
 
+  const handleToggleParentLeave = async (studentId: string, date: string, isLeave: boolean, reason?: string) => {
+    const existing = attendance.find(a => a.studentId === studentId && a.date === date);
+    const targetStudent = students.find(s => s.id === studentId);
+    const updatedRecord: AttendanceRecord = {
+      id: existing?.id || `ATT-${Date.now()}-${studentId}`,
+      date: date,
+      studentId: studentId,
+      studentName: targetStudent?.fullName || existing?.studentName || '',
+      classId: currentClassId,
+      status: isLeave ? 'excused' : 'present',
+      pickupNote: isLeave ? (reason || 'Phụ huynh xin nghỉ phép hôm nay qua App') : '',
+      arrivalTime: existing?.arrivalTime || (isLeave ? '' : '07:30'),
+      temperature: existing?.temperature || 36.5,
+      updatedBy: 'Phụ huynh học sinh',
+      createdAt: existing?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    await handleSaveAttendance([updatedRecord]);
+  };
+
   const handleAddHealthRecord = async (data: Partial<HealthRecord>) => {
     const res = await apiClient.addHealthRecord(data);
     if (res.success) {
@@ -316,19 +337,19 @@ export function App() {
     }
   };
 
-  // Filter navigation items based on current role (Ban Giám Hiệu vs Giáo Viên)
+  // Filter navigation items based on current role (Giáo Viên)
   const allNavItems = [
-    { key: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard, roles: ['admin', 'teacher'] },
-    { key: 'students', label: 'Hồ sơ trẻ', icon: Users, roles: ['admin', 'teacher'] },
-    { key: 'attendance', label: 'Điểm danh', icon: CheckCircle, roles: ['admin', 'teacher'] },
-    { key: 'schedule', label: 'Lịch hoạt động', icon: Calendar, roles: ['admin', 'teacher'] },
-    { key: 'meals', label: 'Thực đơn ăn', icon: Utensils, roles: ['admin', 'teacher'] },
-    { key: 'health', label: 'Sức khỏe & BMI', icon: Activity, roles: ['admin', 'teacher'] },
-    { key: 'curriculum', label: 'Giáo án tuần', icon: BookOpen, roles: ['admin', 'teacher'] },
-    { key: 'gallery', label: 'Thư viện ảnh', icon: ImageIcon, roles: ['admin', 'teacher'] },
-    { key: 'communication', label: 'Bảng tin & Nhắn tin', icon: Bell, roles: ['admin', 'teacher'] },
-    { key: 'reports', label: 'Báo cáo & Thống kê', icon: BarChart3, roles: ['admin'] },
-    { key: 'settings', label: 'Cài đặt hệ thống', icon: Settings, roles: ['admin'] },
+    { key: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard, roles: ['teacher'] },
+    { key: 'students', label: 'Hồ sơ trẻ (21 bé)', icon: Users, roles: ['teacher'] },
+    { key: 'attendance', label: 'Điểm danh', icon: CheckCircle, roles: ['teacher'] },
+    { key: 'schedule', label: 'Lịch hoạt động', icon: Calendar, roles: ['teacher'] },
+    { key: 'meals', label: 'Thực đơn ăn', icon: Utensils, roles: ['teacher'] },
+    { key: 'health', label: 'Sức khỏe & BMI', icon: Activity, roles: ['teacher'] },
+    { key: 'curriculum', label: 'Giáo án tuần', icon: BookOpen, roles: ['teacher'] },
+    { key: 'gallery', label: 'Thư viện ảnh', icon: ImageIcon, roles: ['teacher'] },
+    { key: 'communication', label: 'Bảng tin & Nhắn tin', icon: Bell, roles: ['teacher'] },
+    { key: 'reports', label: 'Báo cáo & Thống kê', icon: BarChart3, roles: ['teacher'] },
+    { key: 'settings', label: 'Cài đặt hệ thống', icon: Settings, roles: ['teacher'] },
   ];
 
   const navItems = allNavItems.filter(item => item.roles.includes(currentRole));
@@ -341,7 +362,7 @@ export function App() {
           <Heart className="h-8 w-8 animate-bounce" />
         </div>
         <h2 className="mt-4 text-base font-extrabold text-slate-800 tracking-wide">
-          TRƯỜNG MẦM NON QUỲNH SƠN 1
+          APP QUẢN LÝ LỚP 2 TUỔI I MNQS1
         </h2>
         <p className="mt-1 text-xs text-slate-500">
           Đang nạp dữ liệu nghiệp vụ mầm non & Google Sheets...
@@ -391,16 +412,9 @@ export function App() {
             {/* Role switch for test */}
             <div className="hidden md:flex items-center rounded-xl bg-slate-100 p-1 text-xs">
               <button
-                onClick={() => handleRoleChange('admin')}
-                className="px-2.5 py-1 rounded-lg font-bold text-[11px] text-slate-500 hover:text-slate-900 cursor-pointer"
-                title="Chuyển sang Ban Giám Hiệu"
-              >
-                BGH
-              </button>
-              <button
                 onClick={() => handleRoleChange('teacher')}
                 className="px-2.5 py-1 rounded-lg font-bold text-[11px] text-slate-500 hover:text-slate-900 cursor-pointer"
-                title="Chuyển sang Giáo Viên"
+                title="Chuyển sang Giáo Viên (Cô Hồ Thị Hạnh)"
               >
                 Giáo viên
               </button>
@@ -446,6 +460,7 @@ export function App() {
             currentUser={currentUser}
             selectedDate={selectedDate}
             onSendMessage={handleSendMessage}
+            onToggleLeave={handleToggleParentLeave}
           />
         </main>
       </div>
@@ -470,10 +485,10 @@ export function App() {
             </div>
             <div className="min-w-0">
               <h1 className="text-sm font-black text-slate-900 tracking-tight truncate">
-                {school.name.split('–')[0]?.trim()}
+                APP QUẢN LÝ LỚP 2 TUỔI I
               </h1>
               <span className="text-[10px] font-bold text-rose-500 uppercase tracking-wider block truncate">
-                {currentRole === 'admin' ? 'Ban Giám Hiệu Quản Trị' : 'Giáo Viên Lớp 2 Tuổi I'}
+                Giáo Viên: Cô Hồ Thị Hạnh
               </span>
             </div>
           </div>
@@ -481,18 +496,14 @@ export function App() {
           {/* Current Class Pill */}
           <div className="rounded-2xl bg-gradient-to-r from-rose-50 to-pink-50 p-3 border border-rose-100">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-              {currentRole === 'admin' ? 'Chọn lớp theo dõi' : 'Lớp phụ trách'}
+              Lớp phụ trách
             </span>
-            <select
-              value={currentClassId}
-              onChange={(e) => setCurrentClassId(e.target.value)}
-              disabled={currentRole === 'teacher'}
-              className="mt-1 w-full bg-transparent font-extrabold text-xs text-rose-900 focus:outline-none cursor-pointer disabled:cursor-not-allowed"
-            >
-              {classes.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+            <div className="mt-1 font-extrabold text-xs text-rose-900 flex items-center justify-between">
+              <span>{currentClass.name}</span>
+              <span className="text-[10px] font-bold bg-rose-200/80 text-rose-800 px-2 py-0.5 rounded-full">
+                {students.length} bé
+              </span>
+            </div>
           </div>
 
           {/* Navigation Links based on RBAC */}
@@ -520,7 +531,7 @@ export function App() {
 
         {/* Bottom Sidebar: User info, Google Sheets button & Logout */}
         <div className="pt-4 border-t border-rose-100/60 space-y-3">
-          {currentRole === 'admin' && (
+          {currentRole === 'teacher' && (
             <button
               onClick={() => setIsGoogleModalOpen(true)}
               className="w-full flex items-center justify-between p-3 rounded-2xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-900 transition border border-slate-100 hover:border-emerald-200 text-left cursor-pointer"
@@ -593,8 +604,8 @@ export function App() {
           <div className="flex items-center gap-2.5">
             <PWAInstallButton />
 
-            {/* Google Apps Script Connect Button (for Admin) */}
-            {currentRole === 'admin' && (
+            {/* Google Apps Script Connect Button (for Teacher) */}
+            {currentRole === 'teacher' && (
               <button
                 onClick={() => setIsGoogleModalOpen(true)}
                 className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100 transition cursor-pointer"
@@ -605,19 +616,8 @@ export function App() {
               </button>
             )}
 
-            {/* Role Switcher Pill for Testing All Roles */}
+            {/* Role Switcher Pill for Testing */}
             <div className="flex items-center rounded-xl bg-slate-100 p-1 text-xs">
-              <button
-                onClick={() => handleRoleChange('admin')}
-                className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition cursor-pointer ${
-                  currentRole === 'admin'
-                    ? 'bg-indigo-600 text-white shadow-2xs'
-                    : 'text-slate-500 hover:text-slate-900'
-                }`}
-                title="Đăng nhập tài khoản Ban Giám Hiệu"
-              >
-                BGH
-              </button>
               <button
                 onClick={() => handleRoleChange('teacher')}
                 className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition cursor-pointer ${
@@ -625,7 +625,7 @@ export function App() {
                     ? 'bg-rose-500 text-white shadow-2xs'
                     : 'text-slate-500 hover:text-slate-900'
                 }`}
-                title="Đăng nhập tài khoản Cô Lê Thị Hạnh"
+                title="Đăng nhập tài khoản Cô Hồ Thị Hạnh"
               >
                 Giáo viên
               </button>
@@ -636,7 +636,7 @@ export function App() {
                     ? 'bg-emerald-600 text-white shadow-2xs'
                     : 'text-slate-500 hover:text-slate-900'
                 }`}
-                title="Đăng nhập tài khoản Phụ huynh bé An Nhiên"
+                title="Đăng nhập vai trò Phụ huynh"
               >
                 Phụ huynh
               </button>
@@ -706,7 +706,7 @@ export function App() {
               </div>
 
               <div className="space-y-2">
-                {currentRole === 'admin' && (
+                {currentRole === 'teacher' && (
                   <button
                     onClick={() => {
                       setIsGoogleModalOpen(true);
