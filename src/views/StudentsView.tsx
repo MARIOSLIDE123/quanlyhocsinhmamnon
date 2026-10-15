@@ -24,6 +24,7 @@ interface Props {
   students: Student[];
   classes: Classroom[];
   currentClass: Classroom;
+  isDemo?: boolean;
   onAddStudent: (student: Partial<Student>) => Promise<void>;
   onUpdateStudent: (id: string, student: Partial<Student>) => Promise<void>;
   onDeleteStudent: (id: string) => Promise<void>;
@@ -33,6 +34,7 @@ export const StudentsView: React.FC<Props> = ({
   students,
   classes,
   currentClass,
+  isDemo = false,
   onAddStudent,
   onUpdateStudent,
   onDeleteStudent
@@ -88,6 +90,10 @@ export const StudentsView: React.FC<Props> = ({
   });
 
   const handleOpenAdd = () => {
+    if (isDemo) {
+      alert('Tài khoản dùng thử chỉ có quyền xem, không thể tiếp nhận học sinh mới!');
+      return;
+    }
     setEditingStudent(null);
     setFormData({
       fullName: '',
@@ -117,6 +123,10 @@ export const StudentsView: React.FC<Props> = ({
   };
 
   const handleOpenEdit = (student: Student) => {
+    if (isDemo) {
+      alert('Tài khoản dùng thử chỉ có quyền xem, không thể chỉnh sửa thông tin học sinh!');
+      return;
+    }
     setEditingStudent(student);
     setFormData({
       ...student,
@@ -138,6 +148,10 @@ export const StudentsView: React.FC<Props> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isDemo) {
+      alert('Tài khoản dùng thử chỉ có quyền xem, không thể lưu thay đổi!');
+      return;
+    }
     if (!formData.fullName?.trim()) {
       alert('Vui lòng nhập họ và tên của trẻ');
       return;
@@ -172,6 +186,10 @@ export const StudentsView: React.FC<Props> = ({
   };
 
   const handleDelete = async (student: Student) => {
+    if (isDemo) {
+      alert('Tài khoản dùng thử chỉ có quyền xem, không thể xóa hoặc thay đổi sĩ số học sinh!');
+      return;
+    }
     if (confirm(`Bạn có chắc chắn muốn chuyển trạng thái nghỉ học cho bé "${student.fullName}"?`)) {
       try {
         await onDeleteStudent(student.id);
@@ -265,7 +283,7 @@ export const StudentsView: React.FC<Props> = ({
       </div>
 
       {/* Students Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
         {filteredStudents.map((student) => {
           const primaryGuardian = student.guardians?.find(g => g.isPrimaryContact) || student.guardians?.[0];
 

@@ -11,6 +11,7 @@ export interface UserAccount {
   avatarUrl?: string;
   classId?: string; // Assigned class for teachers or child's class for parents
   studentId?: string; // Associated child ID for parents
+  isDemo?: boolean; // Demo account flag with restricted permissions
   status: 'active' | 'inactive';
 }
 

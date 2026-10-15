@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { HealthRecord, DevelopmentalEvaluation, Student, Classroom } from '../types';
+import { StudentAvatarBadge } from '../components/StudentAvatarBadge';
 import {
   Activity,
   Plus,
@@ -198,7 +199,7 @@ export const HealthView: React.FC<Props> = ({
       {/* TAB 1: GROWTH & BMI */}
       {activeTab === 'growth' && (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
             {classStudents.map((student) => {
               const rec = healthRecords.find(h => h.studentId === student.id) || {
                 heightCm: 106,
@@ -222,13 +223,14 @@ export const HealthView: React.FC<Props> = ({
                   className="rounded-3xl border border-sky-100 bg-white p-5 shadow-xs space-y-4 hover:shadow-md transition"
                 >
                   <div className="flex items-center gap-3">
-                    <img
-                      src={student.avatarUrl || 'https://images.unsplash.com/photo-1543332164-6e82f355badc?w=150&auto=format&fit=crop&q=80'}
-                      alt={student.fullName}
-                      className="h-12 w-12 rounded-2xl object-cover border border-sky-100"
+                    <StudentAvatarBadge
+                      name={student.fullName}
+                      initials={student.avatarInitials}
+                      colorName={student.avatarColor}
+                      size="md"
                     />
-                    <div>
-                      <h4 className="font-bold text-slate-800 text-sm">{student.fullName}</h4>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-bold text-slate-800 text-sm truncate">{student.fullName}</h4>
                       <span className="font-mono text-[10px] text-slate-400">{student.studentCode}</span>
                     </div>
                   </div>

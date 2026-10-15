@@ -8,10 +8,7 @@ import {
   Heart,
   Sparkles,
   ArrowRight,
-  CheckCircle2,
-  AlertCircle,
-  HelpCircle,
-  KeyRound
+  AlertCircle
 } from 'lucide-react';
 
 interface Props {
@@ -39,7 +36,6 @@ export const LoginView: React.FC<Props> = ({ accounts, onLogin }) => {
       const e = (a.email || '').toLowerCase().replace(/\s+/g, '');
       const isUserMatch = u === cleanUser || e === cleanUser;
       
-      // Default passwords accepted: user's configured pass, '123456', or '123'
       const isPassMatch = 
         cleanPass === '123456' || 
         cleanPass === '123' || 
@@ -55,27 +51,23 @@ export const LoginView: React.FC<Props> = ({ accounts, onLogin }) => {
       }, 300);
     } else {
       setLoading(false);
-      setErrorMsg('Tên đăng nhập hoặc mật khẩu không chính xác! Vui lòng kiểm tra lại (Mật khẩu mặc định: 123456).');
+      setErrorMsg('Tên đăng nhập hoặc mật khẩu không chính xác! Vui lòng kiểm tra lại.');
     }
   };
 
-  // Quick 1-click test login for Teacher (Cô Hồ Thị Hạnh)
+  // Quick 1-click test login for Demo Teacher (Restricted permissions, no Google Sheets update)
   const handleTeacherQuickLogin = () => {
     setErrorMsg('');
-    const teacher = accounts.find(a => a.role === 'teacher' || a.uid === 'hothihanh');
-    if (teacher) {
-      onLogin(teacher);
-    } else {
-      onLogin({
-        id: 'ACC-TEACHER',
-        uid: 'hothihanh',
-        email: 'hothihanh@quynhson1.edu.vn',
-        displayName: 'Cô Hồ Thị Hạnh',
-        role: 'teacher',
-        classId: 'CLS-2TUOI-I',
-        status: 'active'
-      });
-    }
+    onLogin({
+      id: 'ACC-DEMO',
+      uid: 'demo_giaovien',
+      email: 'demo@quynhson1.edu.vn',
+      displayName: 'Giáo viên (Bản dùng thử)',
+      role: 'teacher',
+      classId: 'CLS-2TUOI-I',
+      isDemo: true,
+      status: 'active'
+    });
   };
 
   return (
@@ -138,7 +130,7 @@ export const LoginView: React.FC<Props> = ({ accounts, onLogin }) => {
                 <input
                   type="text"
                   required
-                  placeholder="Nhập tên đăng nhập của bạn..."
+                  placeholder="Nhập tên đăng nhập..."
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="w-full rounded-2xl border border-slate-200 pl-10 pr-3 py-2.5 text-xs text-slate-800 focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500 bg-slate-50/50 focus:bg-white"
@@ -155,7 +147,7 @@ export const LoginView: React.FC<Props> = ({ accounts, onLogin }) => {
                 <input
                   type="password"
                   required
-                  placeholder="Mật khẩu mặc định: 123456"
+                  placeholder="Nhập mật khẩu..."
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full rounded-2xl border border-slate-200 pl-10 pr-3 py-2.5 text-xs text-slate-800 focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500 bg-slate-50/50 focus:bg-white"
@@ -172,17 +164,9 @@ export const LoginView: React.FC<Props> = ({ accounts, onLogin }) => {
               {loading ? 'Đang xác thực...' : 'Đăng Nhập Vào Hệ Thống'}
             </button>
           </form>
-
-          {/* Quick Notice */}
-          <div className="mt-5 pt-4 border-t border-slate-100 text-[11px] text-slate-500 flex items-start gap-2">
-            <KeyRound className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-            <span>
-              Mật khẩu khởi tạo chung cho tất cả các tài khoản là <strong>123456</strong>.
-            </span>
-          </div>
         </div>
 
-        {/* Right Column: Single Demo Teacher Account + Parent Guide */}
+        {/* Right Column: Demo Teacher Account */}
         <div className="md:col-span-5 space-y-4">
           
           {/* Quick Demo Card for Teacher */}
@@ -200,40 +184,34 @@ export const LoginView: React.FC<Props> = ({ accounts, onLogin }) => {
 
               <div>
                 <h3 className="text-lg font-black text-white">
-                  Cô Hồ Thị Hạnh
+                  Xem Thử Giao Diện Giáo Viên
                 </h3>
                 <p className="text-xs text-rose-100">
-                  Chủ nhiệm Lớp 2 Tuổi I • Toàn quyền quản trị lớp
+                  Chủ nhiệm Lớp 2 Tuổi I • Bản trải nghiệm xem thử
                 </p>
               </div>
 
               <p className="text-xs text-rose-50/90 leading-relaxed">
-                Nhấp nút bên dưới để đăng nhập ngay vào giao diện Giáo viên và trải nghiệm toàn bộ tính năng quản lý lớp, điểm danh, xin phép nghỉ và sổ liên lạc.
+                Nhấp nút bên dưới để đăng nhập ngay vào giao diện Giáo viên xem thử các tính năng: danh sách lớp, sổ điểm danh, thời khóa biểu và thực đơn.
               </p>
+
+              <div className="rounded-2xl bg-black/20 p-3 text-[11px] text-rose-100 space-y-1">
+                <div className="font-bold text-white flex items-center gap-1">
+                  <span>🔒 Giới hạn dùng thử:</span>
+                </div>
+                <p>
+                  Tài khoản dùng thử bị khóa tính năng chỉnh sửa thông tin học sinh và sĩ số; mọi thao tác từ tài khoản này không cập nhật lên Google Sheets.
+                </p>
+              </div>
 
               <button
                 type="button"
                 onClick={handleTeacherQuickLogin}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-white text-rose-600 hover:bg-rose-50 py-3 px-4 text-xs font-black shadow-md transition cursor-pointer mt-2"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-white text-rose-600 hover:bg-rose-50 py-3 px-4 text-xs font-black shadow-md transition cursor-pointer mt-1"
               >
                 <span>Đăng nhập thử vai trò Giáo viên</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
-            </div>
-          </div>
-
-          {/* Guide Note for Parents */}
-          <div className="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-xs space-y-2.5">
-            <div className="flex items-center gap-2 text-slate-800 font-extrabold text-xs">
-              <HelpCircle className="w-4 h-4 text-emerald-500" />
-              <span>Dành cho Phụ huynh học sinh</span>
-            </div>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Phụ huynh đăng nhập bằng <strong>tên học sinh viết liền không dấu</strong> (ví dụ: <code className="bg-slate-100 text-slate-800 px-1.5 py-0.5 rounded">luongduckhanh</code>, <code className="bg-slate-100 text-slate-800 px-1.5 py-0.5 rounded">lethuytrang</code>...) và mật khẩu <strong>123456</strong>.
-            </p>
-            <div className="text-[11px] text-emerald-700 bg-emerald-50 p-2.5 rounded-xl border border-emerald-100 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
-              <span>Vào app để xem ảnh, theo dõi bữa ăn và tích xin phép nghỉ học cho bé hôm nay.</span>
             </div>
           </div>
 

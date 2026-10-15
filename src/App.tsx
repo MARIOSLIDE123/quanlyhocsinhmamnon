@@ -60,7 +60,8 @@ import {
   LogOut,
   GraduationCap,
   Sparkles,
-  UserCheck
+  UserCheck,
+  AlertCircle
 } from 'lucide-react';
 
 export function App() {
@@ -199,6 +200,10 @@ export function App() {
 
   // CRUD Handlers
   const handleAddStudent = async (studentData: Partial<Student>) => {
+    if (currentUser?.isDemo) {
+      alert('Tài khoản dùng thử chỉ có quyền xem, không thể thêm học sinh và không đồng bộ lên Google Sheets!');
+      return;
+    }
     const res = await apiClient.addStudent(studentData);
     if (res.success) {
       setStudents(prev => [res.data, ...prev]);
@@ -206,6 +211,10 @@ export function App() {
   };
 
   const handleUpdateStudent = async (id: string, updates: Partial<Student>) => {
+    if (currentUser?.isDemo) {
+      alert('Tài khoản dùng thử chỉ có quyền xem, không thể chỉnh sửa học sinh và không đồng bộ lên Google Sheets!');
+      return;
+    }
     const res = await apiClient.updateStudent(id, updates);
     if (res.success) {
       setStudents(prev => prev.map(s => s.id === id ? res.data : s));
@@ -213,6 +222,10 @@ export function App() {
   };
 
   const handleDeleteStudent = async (id: string) => {
+    if (currentUser?.isDemo) {
+      alert('Tài khoản dùng thử chỉ có quyền xem, không thể xóa hoặc thay đổi sĩ số học sinh!');
+      return;
+    }
     const res = await apiClient.deleteStudent(id);
     if (res.success) {
       setStudents(prev => prev.map(s => s.id === id ? { ...s, status: 'leave' } : s));
@@ -220,6 +233,17 @@ export function App() {
   };
 
   const handleSaveAttendance = async (records: AttendanceRecord[]) => {
+    if (currentUser?.isDemo) {
+      setAttendance(prev => {
+        const map = new Map(prev.map(a => [`${a.date}_${a.studentId}`, a]));
+        for (const r of records) {
+          map.set(`${r.date}_${r.studentId}`, r);
+        }
+        return Array.from(map.values());
+      });
+      alert('Chế độ Dùng thử: Dữ liệu điểm danh chỉ cập nhật xem thử trên màn hình và KHÔNG lưu/đồng bộ lên Google Sheets.');
+      return;
+    }
     const res = await apiClient.batchSaveAttendance(records);
     if (res.success) {
       setAttendance(prev => {
@@ -729,8 +753,16 @@ export function App() {
           </div>
         )}
 
+        {/* DEMO NOTICE BANNER */}
+        {currentUser?.isDemo && (
+          <div className="bg-amber-500 text-white px-4 py-2.5 text-xs font-bold text-center flex items-center justify-center gap-2 shadow-xs sticky top-16 z-15">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>Chế độ <strong>Tài khoản dùng thử</strong>: Chỉ có quyền xem, không thể thêm/sửa/xóa học sinh hoặc thay đổi sĩ số. Dữ liệu thử nghiệm không đồng bộ lên Google Sheets.</span>
+          </div>
+        )}
+
         {/* VIEW CONTAINER */}
-        <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-4 md:p-6 lg:p-8 w-full max-w-[1920px] mx-auto">
           {currentView === 'dashboard' && (
             <DashboardView
               school={school}
@@ -753,6 +785,7 @@ export function App() {
               students={students}
               classes={classes}
               currentClass={currentClass}
+              isDemo={currentUser?.isDemo}
               onAddStudent={handleAddStudent}
               onUpdateStudent={handleUpdateStudent}
               onDeleteStudent={handleDeleteStudent}
@@ -831,7 +864,7 @@ export function App() {
             />
           )}
 
-          {currentView === 'reports' && currentRole === 'admin' && (
+          {currentView === 'reports' && (
             <ReportsView
               school={school}
               classes={classes}
@@ -844,7 +877,7 @@ export function App() {
             />
           )}
 
-          {currentView === 'settings' && currentRole === 'admin' && (
+          {currentView === 'settings' && (
             <SettingsView
               school={school}
               auditLogs={auditLogs}
