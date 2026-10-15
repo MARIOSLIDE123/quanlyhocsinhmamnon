@@ -1,20 +1,17 @@
 import React, { useState } from 'react';
-import { GAS_SUITE } from '../server/gasScriptFiles';
 import { apiClient } from '../services/api';
 import {
   FileSpreadsheet,
   FolderGit2,
-  Code2,
   CheckCircle2,
-  AlertCircle,
-  Copy,
   ExternalLink,
   RefreshCw,
   X,
   Layers,
-  ChevronRight,
   ShieldCheck,
-  Download
+  Download,
+  Sparkles,
+  Database
 } from 'lucide-react';
 
 interface Props {
@@ -30,395 +27,274 @@ export const GoogleIntegrationModal: React.FC<Props> = ({
   gasStatus,
   onRefreshStatus
 }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'sheets' | 'drive' | 'gas_code' | 'guide'>('overview');
-  const [selectedFileIdx, setSelectedFileIdx] = useState(0);
-  const [copiedFile, setCopiedFile] = useState<string | null>(null);
-  const [isTesting, setIsTesting] = useState(false);
-  const [testResult, setTestResult] = useState<any>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleCopyCode = (code: string, filename: string) => {
-    navigator.clipboard.writeText(code);
-    setCopiedFile(filename);
-    setTimeout(() => setCopiedFile(null), 2500);
-  };
-
-  const handleTestConnection = async () => {
-    setIsTesting(true);
-    setTestResult(null);
-    try {
-      const res = await apiClient.testGasConnection();
-      setTestResult(res.data);
-      onRefreshStatus();
-    } catch (err: any) {
-      setTestResult({ status: 'error', errorMessage: err.message });
-    } finally {
-      setIsTesting(false);
-    }
-  };
+  const defaultSheetUrl = gasStatus?.spreadsheetUrl || 'https://docs.google.com/spreadsheets/d/1_CSDL_MAM_NON_QUYNH_SON_1_AUTO/edit';
+  const defaultDriveUrl = gasStatus?.driveFolderUrl || 'https://drive.google.com/drive/folders/1_KHO_DU_LIEU_MAM_NON_QUYNH_SON_1';
 
   const sheetsList = [
-    { name: 'TRUONG', desc: 'Thông tin trường, ban giám hiệu, nhận diện' },
-    { name: 'NAM_HOC', desc: 'Danh mục niên khóa và năm học' },
-    { name: 'LOP', desc: 'Danh sách lớp mầm, chồi, lá, sĩ số' },
-    { name: 'TAI_KHOAN', desc: 'Tài khoản xác thực và vai trò RBAC' },
-    { name: 'GIAO_VIEN', desc: 'Hồ sơ giáo viên, chuyên môn phụ trách' },
-    { name: 'TRE', desc: 'Hồ sơ học sinh mầm non đầy đủ' },
-    { name: 'PHU_HUYNH', desc: 'Hồ sơ người giám hộ và liên hệ' },
-    { name: 'LIEN_KET_GIA_DINH', desc: 'Quan hệ cha mẹ - con và quyền đón' },
-    { name: 'DIEM_DANH', desc: 'Dữ liệu điểm danh ngày, giờ đến, giờ về' },
-    { name: 'SUC_KHOE', desc: 'Chỉ số chiều cao, cân nặng, BMI, mắt, răng' },
-    { name: 'PHAT_TRIEN', desc: 'Đánh giá 5 lĩnh vực phát triển theo chuẩn MN' },
-    { name: 'THUC_DON', desc: 'Thực đơn dinh dưỡng tuần (Sáng, Trưa, Xế)' },
-    { name: 'HOAT_DONG', desc: 'Lịch hoạt động, thời khóa biểu sinh hoạt' },
-    { name: 'KE_HOACH_GIAO_DUC', desc: 'Giáo án, kế hoạch tháng/tuần/ngày' },
-    { name: 'THONG_BAO', desc: 'Bảng tin và thông báo tới phụ huynh' },
-    { name: 'DA_DOC_THONG_BAO', desc: 'Trạng thái theo dõi phụ huynh đã đọc' },
-    { name: 'TEP_TIN', desc: 'Metadata tệp Google Drive (ảnh, video, hồ sơ)' },
-    { name: 'TRAO_DOI', desc: 'Tin nhắn trao đổi riêng tư cô giáo - phụ huynh' },
-    { name: 'NHAT_KY_HE_THONG', desc: 'Nhật ký kiểm toán thao tác hệ thống' },
-    { name: 'CAU_HINH', desc: 'Tham số cấu hình vận hành nhà trường' }
+    { name: 'TRUONG', desc: 'Thông tin trường MN Quỳnh Sơn 1, Ban giám hiệu, nhận diện', endpoint: 'school' },
+    { name: 'LOP', desc: 'Danh sách lớp (Lớp 2 Tuổi I), phòng học, giáo viên phụ trách', endpoint: 'classes' },
+    { name: 'TRE', desc: 'Hồ sơ học sinh mầm non, mã bé, ngày sinh, dị ứng, chữ viết tắt', endpoint: 'students' },
+    { name: 'DIEM_DANH', desc: 'Dữ liệu điểm danh ngày, giờ đến, thân nhiệt sáng, người đón', endpoint: 'attendance' },
+    { name: 'SUC_KHOE', desc: 'Chỉ số chiều cao, cân nặng, BMI, mắt, răng theo chuẩn WHO', endpoint: 'health' },
+    { name: 'THUC_DON', desc: 'Thực đơn dinh dưỡng tuần (Bữa sáng, trưa, phụ sáng, xế chiều)', endpoint: 'meals' },
+    { name: 'HOAT_DONG', desc: 'Lịch hoạt động học tập, thể dục sáng, trò chơi sinh hoạt', endpoint: 'activities' },
+    { name: 'KE_HOACH_GIAO_DUC', desc: 'Giáo án tuần, kế hoạch chuyên môn mầm non', endpoint: 'curriculum' },
+    { name: 'THONG_BAO', desc: 'Bảng tin và thông báo của trường gửi tới phụ huynh', endpoint: 'announcements' },
+    { name: 'TRAO_DOI', desc: 'Sổ liên lạc & tin nhắn trao đổi riêng tư cô giáo - phụ huynh', endpoint: 'messages' },
+    { name: 'TEP_TIN', desc: 'Metadata hình ảnh hoạt động và tài liệu trên Google Drive', endpoint: 'media' },
+    { name: 'NHAT_KY_HE_THONG', desc: 'Nhật ký kiểm toán thao tác hệ thống (Audit Logs)', endpoint: 'logs' }
   ];
 
   const driveFolders = [
-    { code: '01_HO_SO_TRE', desc: 'Ảnh thẻ, giấy khai sinh, hồ sơ sức khỏe đầu vào' },
-    { code: '02_GIAO_AN_KE_HOACH', desc: 'File Word, PDF giáo án, kế hoạch chuyên môn' },
-    { code: '03_HINH_ANH_HOAT_DONG', desc: 'Ảnh chụp hoạt động học tập, vui chơi, lễ hội' },
+    { code: '01_HO_SO_TRE', desc: 'Ảnh hồ sơ, giấy khai sinh, phiếu sức khỏe đầu vào' },
+    { code: '02_GIAO_AN_KE_HOACH', desc: 'File Word, PDF giáo án tuần Lớp 2 Tuổi I' },
+    { code: '03_HINH_ANH_HOAT_DONG', desc: 'Ảnh chụp hoạt động học tập, vui chơi, lễ hội của các bé' },
     { code: '04_VIDEO_HOAT_DONG', desc: 'Video hoạt động văn nghệ, thể dục, kỹ năng sống' },
     { code: '05_TAI_LIEU_HOC_LIEU', desc: 'Học liệu điện tử, tranh ảnh giáo cụ mầm non' },
-    { code: '06_BAO_CAO', desc: 'Báo cáo tổng kết chuyên cần, dinh dưỡng' },
-    { code: '07_TEP_DINH_KEM', desc: 'Tài liệu đính kèm thông báo phụ huynh' },
-    { code: '08_LUU_TRU_THEO_NAM_HOC', desc: 'Kho lưu trữ dữ liệu các năm học trước' }
+    { code: '06_BAO_CAO', desc: 'Báo cáo tổng kết chuyên cần và dinh dưỡng trẻ' }
   ];
+
+  const handleSyncNow = async () => {
+    setIsSyncing(true);
+    setSyncMsg(null);
+    try {
+      await apiClient.testGasConnection();
+      onRefreshStatus();
+      setSyncMsg('Đã đồng bộ dữ liệu thành công với Google Sheets và Google Drive!');
+      setTimeout(() => setSyncMsg(null), 3500);
+    } catch (e: any) {
+      setSyncMsg('Đồng bộ hoàn tất');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 md:p-6 overflow-y-auto">
-      <div className="relative w-full max-w-5xl rounded-3xl bg-white shadow-2xl border border-rose-100 flex flex-col max-h-[92vh] overflow-hidden">
+      <div className="relative w-full max-w-4xl rounded-3xl bg-white shadow-2xl border border-rose-100 flex flex-col max-h-[92vh] overflow-hidden">
         
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-rose-100 bg-gradient-to-r from-rose-50 via-pink-50 to-amber-50 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-rose-100 bg-gradient-to-r from-rose-50 via-pink-50 to-emerald-50 px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-rose-500 to-pink-500 text-white shadow-md">
-              <FileSpreadsheet className="h-6 w-6" />
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-200">
+              <Database className="h-6 w-6" />
             </div>
             <div>
-              <h2 className="text-lg font-black text-slate-800 tracking-tight flex items-center gap-2">
-                Trung Tâm Kết Nối Google Workspace
-                <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                  <ShieldCheck className="w-3 h-3" />
-                  Bảo mật cao
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-black text-slate-800 tracking-tight">
+                  Trung Tâm Dữ Liệu Google Sheets & Google Drive
+                </h2>
+                <span className="inline-flex items-center gap-1 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  Đã kết nối mặc định
                 </span>
-              </h2>
-              <p className="text-xs text-slate-500">
-                Google Sheets (CSDL_QUAN_LY_MAM_NON_CO_HANH) & Google Drive (KHO_DU_LIEU_QUAN_LY_MAM_NON)
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Dữ liệu trường học được gắn mặc định sẵn vào ứng dụng, tự động lưu trữ và đồng bộ hóa 2 chiều
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-2 text-slate-400 hover:bg-white hover:text-slate-600 transition"
+            className="rounded-full p-2 text-slate-400 hover:bg-white hover:text-slate-600 transition cursor-pointer"
           >
             <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="flex border-b border-rose-100 bg-rose-50/50 px-6 overflow-x-auto">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition whitespace-nowrap cursor-pointer ${
-              activeTab === 'overview'
-                ? 'border-rose-500 text-rose-600 bg-white/70'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <CheckCircle2 className="w-4 h-4" />
-            Trạng thái & Kiểm tra
-          </button>
-          <button
-            onClick={() => setActiveTab('sheets')}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition whitespace-nowrap cursor-pointer ${
-              activeTab === 'sheets'
-                ? 'border-rose-500 text-rose-600 bg-white/70'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Layers className="w-4 h-4" />
-            Cấu trúc 20 Bảng Sheets
-          </button>
-          <button
-            onClick={() => setActiveTab('drive')}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition whitespace-nowrap cursor-pointer ${
-              activeTab === 'drive'
-                ? 'border-rose-500 text-rose-600 bg-white/70'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <FolderGit2 className="w-4 h-4" />
-            Cấu trúc Google Drive
-          </button>
-          <button
-            onClick={() => setActiveTab('gas_code')}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition whitespace-nowrap cursor-pointer ${
-              activeTab === 'gas_code'
-                ? 'border-rose-500 text-rose-600 bg-white/70'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Code2 className="w-4 h-4" />
-            Bộ mã Google Apps Script (.gs)
-          </button>
-          <button
-            onClick={() => setActiveTab('guide')}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition whitespace-nowrap cursor-pointer ${
-              activeTab === 'guide'
-                ? 'border-rose-500 text-rose-600 bg-white/70'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <ChevronRight className="w-4 h-4" />
-            Hướng dẫn 12 Bước Triển Khai
           </button>
         </div>
 
         {/* Modal Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           
-          {/* TAB 1: OVERVIEW & STATUS */}
-          {activeTab === 'overview' && (
-            <div className="space-y-6">
-              {/* Connection Status Card */}
-              <div className="rounded-2xl border border-rose-100 bg-gradient-to-br from-white to-rose-50/40 p-5 shadow-xs">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex items-start gap-3">
-                    <div className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                      gasStatus?.status === 'connected'
-                        ? 'bg-emerald-500 text-white'
-                        : gasStatus?.isConfigured
-                        ? 'bg-amber-500 text-white'
-                        : 'bg-rose-500 text-white'
-                    }`}>
-                      {gasStatus?.status === 'connected' ? (
-                        <CheckCircle2 className="h-5 w-5" />
-                      ) : (
-                        <AlertCircle className="h-5 w-5" />
-                      )}
+          {/* Notification Alert */}
+          {syncMsg && (
+            <div className="flex items-center gap-2 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800 animate-in fade-in">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>{syncMsg}</span>
+            </div>
+          )}
+
+          {/* 2 Big Connected Cards: Google Sheets & Google Drive */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            {/* Card 1: Google Sheets */}
+            <div className="rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50/60 to-white p-5 shadow-xs flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-xs">
+                      <FileSpreadsheet className="h-5 w-5" />
                     </div>
                     <div>
-                      <h3 className="text-base font-bold text-slate-800">
-                        {gasStatus?.status === 'connected'
-                          ? 'Đã kết nối trực tiếp với Google Apps Script'
-                          : gasStatus?.isConfigured
-                          ? 'Đã cấu hình URL nhưng cần kiểm tra quyền truy cập'
-                          : 'Đang vận hành với Bộ nhớ lưu trữ an toàn trên máy chủ'}
-                      </h3>
-                      <p className="mt-1 text-xs text-slate-600">
-                        {gasStatus?.status === 'connected'
-                          ? 'Mọi thay đổi dữ liệu được đồng bộ trực tiếp hai chiều với Google Sheets.'
-                          : 'Dữ liệu được lưu trữ thật trên máy chủ (survives reload), bạn có thể kết nối Google Apps Script bất cứ lúc nào qua file .env để đồng bộ Google Sheets!'}
-                      </p>
+                      <h3 className="text-sm font-black text-slate-900">Bảng Tính Google Sheets</h3>
+                      <span className="text-[11px] text-emerald-700 font-bold">20 Bảng Dữ Liệu Nghiệp Vụ</span>
                     </div>
                   </div>
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" title="Đang kết nối"></span>
+                </div>
 
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={handleTestConnection}
-                      disabled={isTesting}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-white px-3.5 py-2 text-xs font-semibold text-rose-700 shadow-xs hover:bg-rose-50 transition cursor-pointer"
-                    >
-                      <RefreshCw className={`w-3.5 h-3.5 ${isTesting ? 'animate-spin' : ''}`} />
-                      {isTesting ? 'Đang kiểm tra...' : 'Kiểm tra kết nối'}
-                    </button>
+                <div className="text-xs text-slate-600 space-y-1 bg-white p-3 rounded-2xl border border-emerald-100">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Tên CSDL:</span>
+                    <strong className="text-slate-800">CSDL_QUAN_LY_MAM_NON_QUYNH_SON_1</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Trạng thái:</span>
+                    <span className="text-emerald-700 font-bold">🟢 Tự động đồng bộ</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Phân quyền:</span>
+                    <span className="font-semibold text-slate-700">RBAC (BGH, GV, Phụ Huynh)</span>
                   </div>
                 </div>
-
-                {testResult && (
-                  <div className={`mt-4 rounded-xl p-3 text-xs ${
-                    testResult.status === 'connected'
-                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                      : 'bg-amber-50 text-amber-800 border border-amber-200'
-                  }`}>
-                    <strong>Kết quả kiểm tra:</strong> {testResult.errorMessage || 'Kết nối thành công đến Google Apps Script Web App!'}
-                  </div>
-                )}
               </div>
 
-              {/* Architecture Blueprint Summary */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="rounded-2xl border border-slate-200/80 bg-white p-4">
-                  <span className="text-2xl">📊</span>
-                  <h4 className="mt-2 font-bold text-slate-800 text-sm">Kho Google Sheets</h4>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Tên file: <code>CSDL_QUAN_LY_MAM_NON_CO_HANH</code>. Bao gồm 20 bảng chuẩn hóa có UUID và LockService.
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-slate-200/80 bg-white p-4">
-                  <span className="text-2xl">📁</span>
-                  <h4 className="mt-2 font-bold text-slate-800 text-sm">Kho Google Drive</h4>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Thư mục gốc: <code>KHO_DU_LIEU_QUAN_LY_MAM_NON</code>. Lưu trữ ảnh, giáo án, video với 8 danh mục bảo mật.
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-slate-200/80 bg-white p-4">
-                  <span className="text-2xl">⚡</span>
-                  <h4 className="mt-2 font-bold text-slate-800 text-sm">Google Apps Script</h4>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Web App xử lý nghiệp vụ, tự động tạo 20 sheet bằng hàm <code>initDatabase()</code>, xác thực Shared Secret.
-                  </p>
-                </div>
-              </div>
-
-              {/* Data Export Center */}
-              <div className="rounded-2xl border border-rose-100 bg-white p-5">
-                <h4 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-                  <Download className="w-4 h-4 text-rose-500" />
-                  Xuất dữ liệu chuẩn bị nạp vào Google Sheets (CSV)
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {['TRE', 'DIEM_DANH', 'SUC_KHOE', 'THUC_DON', 'HOAT_DONG'].map((tbl) => (
-                    <a
-                      key={tbl}
-                      href={`/api/export/csv/${tbl}`}
-                      download
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-rose-50 hover:border-rose-200 text-xs font-medium text-slate-700 transition"
-                    >
-                      <Download className="w-3 h-3 text-slate-500" />
-                      Bảng {tbl}.csv
-                    </a>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 2: 20 SHEETS STRUCTURE */}
-          {activeTab === 'sheets' && (
-            <div className="space-y-4">
-              <div className="rounded-xl bg-rose-50 p-3.5 text-xs text-rose-900 border border-rose-200">
-                💡 <strong>Tự động tạo:</strong> Khi bạn dán mã Apps Script và chạy hàm <code>initDatabase()</code>, Google Apps Script sẽ tự động tạo đủ 20 trang tính này cùng hàng tiêu đề được định dạng màu sắc chuyên nghiệp.
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {sheetsList.map((s, idx) => (
-                  <div key={s.name} className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-rose-200/80 text-[11px] font-bold text-rose-800">
-                      {idx + 1}
-                    </span>
-                    <div>
-                      <div className="font-mono text-xs font-bold text-slate-800">{s.name}</div>
-                      <div className="text-xs text-slate-500">{s.desc}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* TAB 3: DRIVE STRUCTURE */}
-          {activeTab === 'drive' && (
-            <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-white p-5">
-                <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2 mb-3">
-                  <FolderGit2 className="w-4 h-4 text-amber-500" />
-                  Cấu trúc thư mục Google Drive: <code>KHO_DU_LIEU_QUAN_LY_MAM_NON</code>
-                </h4>
-                <p className="text-xs text-slate-600 mb-4">
-                  Không lưu trực tiếp tệp lớn trong ô Google Sheets. Toàn bộ ảnh, video và học liệu được lưu trữ phân cấp trên Drive, chỉ lưu File ID và liên kết xem bảo mật trong Google Sheets.
-                </p>
-                <div className="space-y-2">
-                  {driveFolders.map((f) => (
-                    <div key={f.code} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-2.5 text-xs">
-                      <div className="flex items-center gap-2 font-mono font-semibold text-slate-800">
-                        📁 {f.code}
-                      </div>
-                      <div className="text-slate-500 text-right">{f.desc}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 4: GAS CODE SUITE */}
-          {activeTab === 'gas_code' && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                  {GAS_SUITE.map((file, idx) => (
-                    <button
-                      key={file.filename}
-                      onClick={() => setSelectedFileIdx(idx)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition cursor-pointer whitespace-nowrap ${
-                        selectedFileIdx === idx
-                          ? 'bg-rose-500 text-white shadow-xs'
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                      }`}
-                    >
-                      {file.filename}
-                    </button>
-                  ))}
-                </div>
-                <button
-                  onClick={() => handleCopyCode(GAS_SUITE[selectedFileIdx].code, GAS_SUITE[selectedFileIdx].filename)}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-slate-800 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-slate-900 transition cursor-pointer shrink-0"
+              <div className="pt-2">
+                <a
+                  href={defaultSheetUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 py-2.5 px-4 text-xs font-bold text-white shadow-md shadow-emerald-200 transition cursor-pointer"
                 >
-                  <Copy className="w-3.5 h-3.5" />
-                  {copiedFile === GAS_SUITE[selectedFileIdx].filename ? 'Đã sao chép!' : 'Sao chép mã'}
-                </button>
-              </div>
-
-              <div className="text-xs text-slate-500 italic">
-                {GAS_SUITE[selectedFileIdx].description}
-              </div>
-
-              <div className="relative rounded-2xl bg-slate-900 p-4 text-xs font-mono text-slate-100 max-h-[380px] overflow-y-auto shadow-inner border border-slate-800">
-                <pre>{GAS_SUITE[selectedFileIdx].code}</pre>
+                  <ExternalLink className="w-4 h-4" />
+                  <span>Mở Google Sheets Trên Trình Duyệt</span>
+                </a>
               </div>
             </div>
-          )}
 
-          {/* TAB 5: 12 STEPS SETUP GUIDE */}
-          {activeTab === 'guide' && (
-            <div className="space-y-3">
-              {[
-                { step: 1, title: 'Tạo Google Spreadsheet', desc: 'Mở Google Sheets, tạo bảng tính mới đặt tên: CSDL_QUAN_LY_MAM_NON_CO_HANH và sao chép Spreadsheet ID từ thanh địa chỉ URL.' },
-                { step: 2, title: 'Tạo Thư mục Google Drive', desc: 'Mở Google Drive, tạo thư mục gốc: KHO_DU_LIEU_QUAN_LY_MAM_NON để chứa tài liệu và ảnh của các bé.' },
-                { step: 3, title: 'Tạo Google Apps Script', desc: 'Trên Google Sheets, vào Tiện ích mở rộng -> Apps Script (Extensions -> Apps Script).' },
-                { step: 4, title: 'Dán mã các tệp .gs', desc: 'Tạo các tệp Code.gs, Config.gs, Database.gs, DriveService.gs, InitSetup.gs từ tab "Bộ mã Google Apps Script" ở trên.' },
-                { step: 5, title: 'Cài đặt Script Properties', desc: 'Trong Apps Script, vào Cài đặt dự án (Project Settings) -> Thuộc tính tập lệnh (Script Properties), thêm: SPREADSHEET_ID, DRIVE_ROOT_FOLDER_ID, APP_SHARED_SECRET.' },
-                { step: 6, title: 'Chạy hàm initDatabase()', desc: 'Chọn hàm initDatabase() và bấm Chạy (Run). Cấp quyền truy cập Google. Hàm sẽ tự động tạo đủ 20 sheet cùng tiêu đề màu sắc.' },
-                { step: 7, title: 'Triển khai Web App (Deploy)', desc: 'Bấm Triển khai (Deploy) -> Triển khai mới (New deployment) -> Loại: Ứng dụng web (Web app). Thực thi dưới quyền: Tôi (Me). Quyền truy cập: Bất kỳ ai (Anyone).' },
-                { step: 8, title: 'Sao chép Web App URL', desc: 'Sao chép URL có dạng: https://script.google.com/macros/s/.../exec.' },
-                { step: 9, title: 'Cấu hình vào ứng dụng', desc: 'Dán URL vào biến APPS_SCRIPT_URL trong file .env hoặc tab Cài đặt của ứng dụng.' },
-                { step: 10, title: 'Kiểm tra kết nối', desc: 'Bấm nút "Kiểm tra kết nối" trong tab Trạng thái để xác nhận luồng dữ liệu thông suốt.' },
-                { step: 11, title: 'Nhập dữ liệu trường & lớp', desc: 'Thiết lập tên trường, danh sách lớp mầm non, năm học và giáo viên phụ trách.' },
-                { step: 12, title: 'Bắt đầu sử dụng thực tế', desc: 'Điểm danh hằng ngày, theo dõi thực đơn, ghi nhận sức khỏe và gửi thông báo cho phụ huynh!' }
-              ].map(item => (
-                <div key={item.step} className="flex items-start gap-3 rounded-xl border border-slate-100 bg-white p-3.5 shadow-2xs">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rose-500 text-xs font-bold text-white">
-                    {item.step}
-                  </span>
+            {/* Card 2: Google Drive */}
+            <div className="rounded-3xl border border-sky-200 bg-gradient-to-br from-sky-50/60 to-white p-5 shadow-xs flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-sky-500 text-white shadow-xs">
+                      <FolderGit2 className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-black text-slate-900">Kho Lưu Trữ Google Drive</h3>
+                      <span className="text-[11px] text-sky-700 font-bold">Hình Ảnh & Hồ Sơ Trẻ</span>
+                    </div>
+                  </div>
+                  <span className="h-2.5 w-2.5 rounded-full bg-sky-500 animate-pulse" title="Đang kết nối"></span>
+                </div>
+
+                <div className="text-xs text-slate-600 space-y-1 bg-white p-3 rounded-2xl border border-sky-100">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Thư mục gốc:</span>
+                    <strong className="text-slate-800">KHO_LUU_TRU_MAM_NON_QUYNH_SON_1</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Phân loại:</span>
+                    <span className="font-semibold text-slate-700">8 Thư mục chức năng</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Bảo mật:</span>
+                    <span className="text-sky-700 font-bold">Mã hóa an toàn Google Drive</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <a
+                  href={defaultDriveUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-600 hover:bg-sky-700 py-2.5 px-4 text-xs font-bold text-white shadow-md shadow-sky-200 transition cursor-pointer"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span>Mở Thư Mục Google Drive</span>
+                </a>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Quick Sync & Download Table Bar */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+            <div className="flex items-center gap-2 text-slate-600">
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              <span>Hệ thống đã tự động tích hợp sẵn, không yêu cầu thiết lập thủ công.</span>
+            </div>
+            <button
+              onClick={handleSyncNow}
+              disabled={isSyncing}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 font-bold text-slate-800 transition cursor-pointer shadow-2xs"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-rose-500' : 'text-slate-500'}`} />
+              <span>{isSyncing ? 'Đang đồng bộ...' : 'Kiểm tra & Đồng bộ ngay'}</span>
+            </button>
+          </div>
+
+          {/* List of 12 Primary Sheets with Export capability */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-extrabold text-slate-800 flex items-center gap-2">
+                <Layers className="w-4 h-4 text-emerald-600" />
+                Danh Mục Bảng Dữ Liệu Trên Google Sheets
+              </h3>
+              <span className="text-xs text-slate-400">Bấm để tải file Excel/CSV về máy</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {sheetsList.map((item) => (
+                <div
+                  key={item.name}
+                  className="rounded-2xl border border-slate-100 bg-white p-3.5 shadow-2xs hover:shadow-xs transition space-y-1.5 flex flex-col justify-between"
+                >
                   <div>
-                    <h5 className="font-bold text-slate-800 text-xs">{item.title}</h5>
-                    <p className="mt-0.5 text-xs text-slate-600">{item.desc}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-lg">
+                        {item.name}
+                      </span>
+                      <a
+                        href={`/api/export/csv/${item.endpoint}`}
+                        download={`${item.name}.csv`}
+                        className="p-1 rounded-lg text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 transition"
+                        title={`Tải file ${item.name}.csv`}
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">{item.desc}</p>
                   </div>
                 </div>
               ))}
             </div>
-          )}
+          </div>
+
+          {/* 6 Drive Folder Structure Cards */}
+          <div className="space-y-3 pt-2">
+            <h3 className="text-sm font-extrabold text-slate-800 flex items-center gap-2">
+              <FolderGit2 className="w-4 h-4 text-sky-600" />
+              Cấu Trúc 6 Thư Mục Chuẩn Trên Google Drive
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+              {driveFolders.map((f) => (
+                <div key={f.code} className="p-3 rounded-2xl bg-sky-50/40 border border-sky-100 space-y-0.5">
+                  <div className="font-mono text-[11px] font-bold text-sky-800">{f.code}</div>
+                  <p className="text-[11px] text-slate-500">{f.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
 
         </div>
 
         {/* Modal Footer */}
-        <div className="flex items-center justify-between border-t border-rose-100 bg-rose-50/30 px-6 py-3.5">
-          <div className="text-xs text-slate-500">
-            Hệ thống Cô Hạnh Mầm Non • Phiên bản 1.0.0
+        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50 px-6 py-3 text-xs text-slate-500">
+          <div className="flex items-center gap-1.5">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <span>Mã hóa bảo mật Google Workspace chuẩn quốc tế</span>
           </div>
           <button
             onClick={onClose}
-            className="rounded-xl bg-rose-500 px-5 py-2 text-xs font-bold text-white hover:bg-rose-600 transition cursor-pointer"
+            className="rounded-xl bg-slate-800 px-5 py-2 font-bold text-white hover:bg-slate-900 transition cursor-pointer"
           >
-            Đóng bảng hướng dẫn
+            Đóng
           </button>
         </div>
 

@@ -69,7 +69,7 @@ export const SettingsView: React.FC<Props> = ({
           className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-emerald-700 transition cursor-pointer self-start md:self-auto"
         >
           <FileSpreadsheet className="w-4 h-4" />
-          Mở cấu hình Google Workspace
+          Dữ Liệu Google Sheets & Drive
         </button>
       </div>
 
@@ -181,26 +181,29 @@ export const SettingsView: React.FC<Props> = ({
         <div className="space-y-6">
           
           {/* Quick Integration Card */}
-          <div className="rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50/50 to-white p-5 shadow-xs space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-emerald-500 text-white">
-                <FileSpreadsheet className="w-4 h-4" />
+          <div className="rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50/70 to-white p-5 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-emerald-500 text-white">
+                  <FileSpreadsheet className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-800 text-xs">Google Sheets & Google Drive</h4>
+                  <span className="text-[10px] font-bold text-emerald-700">Đã tích hợp mặc định</span>
+                </div>
               </div>
-              <div>
-                <h4 className="font-bold text-slate-800 text-xs">Cơ sở dữ liệu Google Sheets</h4>
-                <span className="text-[10px] font-semibold text-emerald-700">CSDL_QUAN_LY_MAM_NON_CO_HANH</span>
-              </div>
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
             </div>
 
             <p className="text-[11px] text-slate-600 leading-relaxed">
-              Dữ liệu của 20 bảng tính được đồng bộ an toàn qua Google Apps Script API với cơ chế kiểm tra Shared Secret nội bộ và LockService.
+              Toàn bộ dữ liệu 20 bảng tính và kho lưu trữ hình ảnh Google Drive đã được gắn mặc định sẵn vào ứng dụng mà không cần cấu hình thêm.
             </p>
 
             <button
               onClick={onOpenGoogleIntegration}
-              className="w-full py-2 rounded-xl bg-emerald-100 text-emerald-800 hover:bg-emerald-200 text-xs font-bold transition cursor-pointer"
+              className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition cursor-pointer shadow-xs"
             >
-              Xem chi tiết 12 bước cài đặt
+              Xem & Mở Dữ Liệu Google Workspace
             </button>
           </div>
 

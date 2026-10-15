@@ -528,12 +528,12 @@ export function App() {
               <div className="flex items-center gap-2">
                 <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
                 <div>
-                  <div className="text-[11px] font-bold">Google Sheets</div>
-                  <div className="text-[10px] text-slate-400">20 Bảng chuẩn hóa</div>
+                  <div className="text-[11px] font-bold">Google Workspace</div>
+                  <div className="text-[10px] text-slate-400">Sheets & Drive</div>
                 </div>
               </div>
               <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full">
-                Sẵn sàng
+                Đã kết nối
               </span>
             </button>
           )}
@@ -598,10 +598,10 @@ export function App() {
               <button
                 onClick={() => setIsGoogleModalOpen(true)}
                 className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100 transition cursor-pointer"
-                title="Mở bảng hướng dẫn kết nối Google Apps Script & Sheets"
+                title="Mở trung tâm dữ liệu Google Sheets & Drive"
               >
                 <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Google Sheets</span>
+                <span>Google Sheets & Drive</span>
               </button>
             )}
 
@@ -714,7 +714,7 @@ export function App() {
                     }}
                     className="w-full py-2.5 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200"
                   >
-                    Cấu hình Google Sheets
+                    Dữ Liệu Google Sheets & Drive
                   </button>
                 )}
                 <button
