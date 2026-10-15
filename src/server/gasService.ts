@@ -14,14 +14,14 @@ export interface GasConnectionStatus {
 }
 
 export class GasService {
-  public static readonly DEFAULT_SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1_CSDL_MAM_NON_QUYNH_SON_1_AUTO/edit';
-  public static readonly DEFAULT_DRIVE_URL = 'https://drive.google.com/drive/folders/1_KHO_DU_LIEU_MAM_NON_QUYNH_SON_1';
+  public static readonly DEFAULT_SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1LngK6pTU1poJBIbwEVgCpDbGegZRcImDXCoMN_N3Lhw/edit';
+  public static readonly DEFAULT_DRIVE_URL = 'https://drive.google.com/drive/folders/1hDWybAENdmHWUTXgCSu_wD4rsJDyS8PG';
 
   private static getEnv() {
     return {
-      appsScriptUrl: process.env.APPS_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycb_mamnon_quynhson1_default/exec',
-      spreadsheetId: process.env.SPREADSHEET_ID || 'CSDL_QUAN_LY_MAM_NON_QUYNH_SON_1',
-      driveFolderId: process.env.DRIVE_ROOT_FOLDER_ID || 'KHO_LUU_TRU_MAM_NON_QUYNH_SON_1',
+      appsScriptUrl: process.env.APPS_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbyRbSSIw5fH23oTQve8Vmc4vk29zy1AONjucazTkr2dtSQuGybtEXyTw2XnGlIh9tkX5A/exec',
+      spreadsheetId: process.env.SPREADSHEET_ID || '1LngK6pTU1poJBIbwEVgCpDbGegZRcImDXCoMN_N3Lhw',
+      driveFolderId: process.env.DRIVE_ROOT_FOLDER_ID || '1hDWybAENdmHWUTXgCSu_wD4rsJDyS8PG',
       sharedSecret: process.env.APPS_SCRIPT_SHARED_SECRET || 'quynhson1_secret_2026'
     };
   }

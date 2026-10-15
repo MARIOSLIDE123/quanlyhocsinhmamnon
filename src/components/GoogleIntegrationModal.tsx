@@ -32,8 +32,8 @@ export const GoogleIntegrationModal: React.FC<Props> = ({
 
   if (!isOpen) return null;
 
-  const defaultSheetUrl = gasStatus?.spreadsheetUrl || 'https://docs.google.com/spreadsheets/d/1_CSDL_MAM_NON_QUYNH_SON_1_AUTO/edit';
-  const defaultDriveUrl = gasStatus?.driveFolderUrl || 'https://drive.google.com/drive/folders/1_KHO_DU_LIEU_MAM_NON_QUYNH_SON_1';
+  const defaultSheetUrl = gasStatus?.spreadsheetUrl || 'https://docs.google.com/spreadsheets/d/1LngK6pTU1poJBIbwEVgCpDbGegZRcImDXCoMN_N3Lhw/edit';
+  const defaultDriveUrl = gasStatus?.driveFolderUrl || 'https://drive.google.com/drive/folders/1hDWybAENdmHWUTXgCSu_wD4rsJDyS8PG';
 
   const sheetsList = [
     { name: 'TRUONG', desc: 'Thông tin trường MN Quỳnh Sơn 1, Ban giám hiệu, nhận diện', endpoint: 'school' },

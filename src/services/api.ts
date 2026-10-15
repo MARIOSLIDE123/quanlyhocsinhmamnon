@@ -45,10 +45,11 @@ export const apiClient = {
       data: {
         isConfigured: true,
         status: 'connected',
-        spreadsheetId: 'CSDL_QUAN_LY_MAM_NON_QUYNH_SON_1',
-        spreadsheetUrl: 'https://docs.google.com/spreadsheets/d/1_CSDL_MAM_NON_QUYNH_SON_1_AUTO/edit',
-        driveRootFolderId: 'KHO_LUU_TRU_MAM_NON_QUYNH_SON_1',
-        driveFolderUrl: 'https://drive.google.com/drive/folders/1_KHO_DU_LIEU_MAM_NON_QUYNH_SON_1',
+        appsScriptUrl: 'https://script.google.com/macros/s/AKfycbyRbSSIw5fH23oTQve8Vmc4vk29zy1AONjucazTkr2dtSQuGybtEXyTw2XnGlIh9tkX5A/exec',
+        spreadsheetId: '1LngK6pTU1poJBIbwEVgCpDbGegZRcImDXCoMN_N3Lhw',
+        spreadsheetUrl: 'https://docs.google.com/spreadsheets/d/1LngK6pTU1poJBIbwEVgCpDbGegZRcImDXCoMN_N3Lhw/edit',
+        driveRootFolderId: '1hDWybAENdmHWUTXgCSu_wD4rsJDyS8PG',
+        driveFolderUrl: 'https://drive.google.com/drive/folders/1hDWybAENdmHWUTXgCSu_wD4rsJDyS8PG',
         lastCheckedAt: new Date().toISOString()
       }
     };
@@ -60,8 +61,18 @@ export const apiClient = {
 
   async testGasConnection() {
     try {
-      const res = await fetch('/api/gas/test', { method: 'POST' });
-      if (res.ok) return await res.json();
+      const res = await fetch('https://script.google.com/macros/s/AKfycbyRbSSIw5fH23oTQve8Vmc4vk29zy1AONjucazTkr2dtSQuGybtEXyTw2XnGlIh9tkX5A/exec?action=ping');
+      if (res.ok) {
+        const json = await res.json();
+        return {
+          success: true,
+          data: {
+            status: 'connected',
+            message: 'Đã kết nối trực tiếp thành công với Google Sheets và Google Drive của bạn!',
+            lastCheckedAt: new Date().toISOString()
+          }
+        };
+      }
     } catch (err) {
       // ignore
     }
