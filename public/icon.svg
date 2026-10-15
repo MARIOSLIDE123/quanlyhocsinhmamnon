@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FB7185"/>
+      <stop offset="50%" stop-color="#F43F5E"/>
+      <stop offset="100%" stop-color="#FDA4AF"/>
+    </linearGradient>
+    <linearGradient id="sunGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+    <linearGradient id="sproutGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+  </defs>
+  <!-- Background with rounded corners -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  
+  <!-- Subtle warm circle glow in the center -->
+  <circle cx="256" cy="256" r="190" fill="#FFFFFF" opacity="0.2"/>
+
+  <!-- Sun beam in top-right -->
+  <circle cx="360" cy="150" r="45" fill="url(#sunGrad)"/>
+  <circle cx="360" cy="150" r="55" fill="none" stroke="#FEF08A" stroke-width="6" stroke-dasharray="8 6" opacity="0.8"/>
+
+  <!-- Cute School Building / Book base -->
+  <!-- Kindergarten House / Castle shape -->
+  <path d="M140 370 L140 260 L256 170 L372 260 L372 370 Z" fill="#FFFFFF" />
+  <!-- Roof cap with playful tone -->
+  <polygon points="120,265 256,160 392,265" fill="#FFE4E6"/>
+  <polygon points="135,265 256,170 377,265" fill="#FDA4AF"/>
+
+  <!-- Cute Heart in the center of roof -->
+  <path d="M256 220 C246 205 220 205 220 226 C220 248 256 268 256 268 C256 268 292 248 292 226 C292 205 266 205 256 220 Z" fill="#E11D48"/>
+
+  <!-- Door & Windows -->
+  <rect x="226" y="295" width="60" height="75" rx="30" fill="#FB7185"/>
+  <circle cx="256" cy="335" r="5" fill="#FFFFFF"/>
+
+  <rect x="165" y="285" width="38" height="38" rx="8" fill="#E0F2FE"/>
+  <rect x="309" y="285" width="38" height="38" rx="8" fill="#E0F2FE"/>
+
+  <!-- Little sprouting leaf for childcare growth -->
+  <path d="M256 390 C256 420 230 435 210 425 C200 405 225 390 256 390 Z" fill="url(#sproutGrad)"/>
+  <path d="M256 390 C256 420 282 435 302 425 C312 405 287 390 256 390 Z" fill="url(#sproutGrad)"/>
+
+  <!-- Cute smiley stars -->
+  <polygon points="100,160 106,174 121,175 110,185 113,200 100,191 87,200 90,185 79,175 94,174" fill="#FEF08A"/>
+</svg>

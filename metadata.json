@@ -1,0 +1,6 @@
+{
+  "name": "CÔ HẠNH – MẦM NON",
+  "description": "Ứng dụng quản lý lớp học mầm non chuyên nghiệp kết nối Google Sheets, Google Drive và Google Apps Script",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
